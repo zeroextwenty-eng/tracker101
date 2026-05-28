@@ -24,25 +24,17 @@ async def send_webhook(session, url, role_id, item):
             or item.get("thumbnail")
             or item.get("item_image")
             or item.get("item_thumbnail")
-            or None
         )
 
-        raw_price = item.get("price", 0)
-
         try:
-            price_num = int(float(raw_price))
+            price_num = int(float(item.get("price", 0)))
         except:
             price_num = 0
 
         is_free = price_num == 0
-
         color = 0x00FF00 if is_free else 0xFF0000
 
-        role_ping = (
-            f"<@&{role_id}>"
-            if role_id and str(role_id).lower() != "none"
-            else "@here"
-        )
+        role_ping = f"<@&{role_id}>" if role_id and str(role_id).lower() != "none" else "@here"
 
         payload = {
             "content": role_ping,
@@ -52,32 +44,20 @@ async def send_webhook(session, url, role_id, item):
                     "url": link,
                     "color": color,
                     "fields": [
-                        {
-                            "name": "Price",
-                            "value": f"{price_num} Robux",
-                            "inline": True
-                        },
-                        {
-                            "name": "Type",
-                            "value": "FREE" if is_free else "PAID",
-                            "inline": True
-                        }
+                        {"name": "Price", "value": f"{price_num} Robux", "inline": True},
+                        {"name": "Type", "value": "FREE" if is_free else "PAID", "inline": True}
                     ],
-                    "footer": {
-                        "text": "Nerium Search Real-Time"
-                    }
+                    "footer": {"text": "Nerium Search Real-Time"}
                 }
             ]
         }
 
         if image:
-            payload["embeds"][0]["thumbnail"] = {
-                "url": image
-            }
+            payload["embeds"][0]["thumbnail"] = {"url": image}
 
-        async with session.post(url, json=payload) as response:
-            if response.status not in [200, 204]:
-                print(await response.text())
+        async with session.post(url, json=payload, timeout=10) as response:
+            if response.status not in (200, 204):
+                print(f"Webhook failed: {response.status} - {await response.text()}")
 
     except Exception as e:
         print(f"Webhook error: {e}")
